@@ -1,0 +1,20 @@
+{
+  "name": "hybrid-rag-router",
+  "version": "0.1.0",
+  "description": "Route RAG queries across vector, SQL, document, and memory stores",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "demo": "tsx demo/demo.ts"
+  },
+  "keywords": ["rag", "retrieval", "llm", "ai", "router", "typescript"],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "tsx": "^4.19.2"
+  }
+}
