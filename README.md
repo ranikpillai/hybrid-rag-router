@@ -2,9 +2,9 @@
 
 Intelligent hybrid RAG router for vector, SQL, document, and memory stores.
 
-## What changed in 0.1.1
+## What changed in 0.2.0
 
-This version adds lightweight query intent classification and routes queries to the most relevant stores instead of always querying every store.
+This version adds store weighting, route confidence scoring, and tracing hooks so developers can make routing decisions more transparent and tunable.
 
 ## Why
 
@@ -25,26 +25,35 @@ const router = new HybridRouter([
   {
     name: 'vector-main',
     type: 'vector',
-    query: async (query) => [{ text: 'Example chunk', source: 'vector-store', score: 0.9 }]
+    weight: 1.1,
+    query: async (query) => [{ text: 'Vector chunk', source: 'vector-store', score: 0.9 }]
   },
   {
     name: 'sql-main',
     type: 'sql',
+    weight: 1.4,
     query: async (query) => [{ text: 'Structured row result', source: 'postgres', score: 0.8 }]
-  },
-  {
-    name: 'doc-main',
-    type: 'doc',
-    query: async (query) => [{ text: 'Policy text', source: 'confluence', score: 0.85 }]
   }
-]);
+], {
+  onTrace: (event) => console.log(event)
+});
 
-const route = router.route('What is the leave carry forward policy?');
-console.log(route.intent);
+const route = router.route('What is the total approved leaves this quarter?');
+console.log(route.intent, route.confidence);
 
-const context = await router.getContext('What is the leave carry forward policy?');
+const context = await router.getContext('What is the total approved leaves this quarter?');
 console.log(context);
 ```
+
+## Features
+
+- Query intent classification
+- Store routing by type
+- Store weighting for ranking
+- Route confidence scoring
+- Trace hooks for debugging
+- Merge and deduplicate chunks
+- TypeScript types included
 
 ## Supported intents
 
@@ -54,18 +63,9 @@ console.log(context);
 - `factual` -> prefers vector and document stores.
 - `hybrid` -> falls back to all stores.
 
-## Current scope
-
-- Query intent classification
-- Store routing
-- Merge and deduplicate chunks
-- Score-based ranking
-- TypeScript types included
-
 ## Next ideas
 
 - LLM-based routing
-- Store-specific weighting
-- Optional reranking
-- Tracing hooks
+- Reranking plugins
 - Evaluation helpers
+- Routing analytics

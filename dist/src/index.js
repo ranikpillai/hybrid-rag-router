@@ -9,9 +9,11 @@ export class HybridRouter {
     stores;
     maxResults;
     rules;
+    onTrace;
     constructor(stores, options = {}) {
-        this.stores = stores;
+        this.stores = stores.map((store) => ({ ...store, weight: store.weight ?? 1 }));
         this.maxResults = options.maxResults ?? 5;
+        this.onTrace = options.onTrace;
         this.rules = {
             ...DEFAULT_RULES,
             ...options.intentRules,
@@ -57,21 +59,26 @@ export class HybridRouter {
         const intent = this.classify(query);
         const reasons = [];
         let selectedStores = this.stores;
+        let confidence = 0.45;
         if (intent === 'structured') {
             selectedStores = this.stores.filter((store) => store.type === 'sql');
             reasons.push('Detected structured or numeric query, preferring SQL stores.');
+            confidence = 0.92;
         }
         else if (intent === 'policy') {
             selectedStores = this.stores.filter((store) => store.type === 'doc' || store.type === 'vector');
             reasons.push('Detected policy or manual style query, preferring doc and vector stores.');
+            confidence = 0.86;
         }
         else if (intent === 'personal') {
             selectedStores = this.stores.filter((store) => store.type === 'memory');
             reasons.push('Detected personal or session query, preferring memory stores.');
+            confidence = 0.9;
         }
         else if (intent === 'factual') {
             selectedStores = this.stores.filter((store) => store.type === 'vector' || store.type === 'doc');
             reasons.push('Detected factual query, preferring vector and doc stores.');
+            confidence = 0.75;
         }
         else {
             reasons.push('No clear intent match, using hybrid retrieval across all stores.');
@@ -79,8 +86,17 @@ export class HybridRouter {
         if (selectedStores.length === 0) {
             selectedStores = this.stores;
             reasons.push('No matching stores found for intent, falling back to all stores.');
+            confidence = Math.min(confidence, 0.4);
         }
-        return { intent, selectedStores, reasons };
+        const route = { intent, selectedStores, reasons, confidence };
+        this.onTrace?.({
+            query,
+            intent,
+            confidence,
+            selectedStoreNames: selectedStores.map((store) => store.name),
+            reasons
+        });
+        return route;
     }
     async getContext(query) {
         const route = this.route(query);
@@ -88,11 +104,14 @@ export class HybridRouter {
             const chunks = await store.query(query);
             return chunks.map((chunk) => ({
                 ...chunk,
+                score: (chunk.score ?? 0) * (store.weight ?? 1),
                 metadata: {
                     ...(chunk.metadata ?? {}),
                     storeName: store.name,
                     storeType: store.type,
+                    storeWeight: store.weight,
                     intent: route.intent,
+                    routeConfidence: route.confidence,
                     routeReasons: route.reasons
                 }
             }));
