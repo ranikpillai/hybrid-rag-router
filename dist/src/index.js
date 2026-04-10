@@ -1,5 +1,5 @@
 const DEFAULT_RULES = {
-    structured: ['count', 'sum', 'average', 'total', 'sql', 'table', 'report', 'number', 'metric'],
+    structured: ['count', 'sum', 'average', 'total', 'sql', 'table', 'report', 'number', 'metric', 'how many', 'quarter', 'approved'],
     policy: ['policy', 'rule', 'guideline', 'leave', 'eligibility', 'approval', 'manual', 'sop'],
     personal: ['my', 'me', 'mine', 'history', 'previous', 'last time', 'session'],
     factual: ['what', 'who', 'when', 'where', 'define', 'explain'],
@@ -24,24 +24,32 @@ export class HybridRouter {
     }
     classify(query) {
         const lower = query.toLowerCase();
+        const signalCount = (keywords) => keywords.reduce((sum, keyword) => sum + (lower.includes(keyword) ? 1 : 0), 0);
+        const structuredScore = signalCount(this.rules.structured) * 2;
+        const policyScore = signalCount(this.rules.policy);
+        const personalScore = signalCount(this.rules.personal);
+        const factualScore = signalCount(this.rules.factual);
+        if (structuredScore >= 2)
+            return 'structured';
+        if (personalScore >= 1)
+            return 'personal';
+        if (policyScore >= 1 && structuredScore === 0)
+            return 'policy';
+        if (factualScore >= 1 && policyScore === 0 && structuredScore === 0)
+            return 'factual';
         const scores = {
-            factual: 0,
-            structured: 0,
-            policy: 0,
-            personal: 0,
+            factual: factualScore,
+            structured: structuredScore,
+            policy: policyScore,
+            personal: personalScore,
             hybrid: 0
         };
-        for (const [intent, keywords] of Object.entries(this.rules)) {
-            if (intent === 'hybrid')
-                continue;
-            scores[intent] = keywords.reduce((sum, keyword) => sum + (lower.includes(keyword) ? 1 : 0), 0);
-        }
         const sorted = Object.entries(scores)
             .filter(([intent]) => intent !== 'hybrid')
             .sort((a, b) => b[1] - a[1]);
         if (sorted[0][1] === 0)
             return 'hybrid';
-        if (sorted[0][1] > 0 && sorted[1][1] > 0 && sorted[0][1] === sorted[1][1])
+        if (sorted[0][1] === sorted[1][1])
             return 'hybrid';
         return sorted[0][0];
     }
