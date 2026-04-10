@@ -1,6 +1,6 @@
 {
     "name": "hybrid-rag-router",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Intelligent hybrid RAG router for vector, SQL, document, and memory stores",
     "type": "module",
     "main": "dist/index.js",
