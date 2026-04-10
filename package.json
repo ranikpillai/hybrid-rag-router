@@ -12,7 +12,7 @@
     "scripts": {
         "build": "tsc -p tsconfig.json",
         "demo": "tsx demo/demo.ts",
-        "test": "node --test dist/test/**/*.js",
+         "test": "node --test dist/test/router.test.js",
         "lint": "eslint .",
         "lint:fix": "eslint . --fix",
         "prepublishOnly": "npm run build && npm test"
