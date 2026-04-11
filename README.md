@@ -1,5 +1,8 @@
 # hybrid-rag-router
 
+[![npm](https://img.shields.io/npm/dm/hybrid-rag-router)](https://npm-stat.com/~h24/hybrid-rag-router)
+[![npm](https://img.shields.io/npm/v/hybrid-rag-router)](https://www.npmjs.com/package/hybrid-rag-router)
+
 Intelligent hybrid RAG router for vector, SQL, document, and memory stores.
 
 ## What changed in 0.2.0
